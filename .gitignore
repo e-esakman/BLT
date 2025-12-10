@@ -25,3 +25,8 @@ google-credentials.json
 
 
 .env
+
+# Demo/testing scripts (not for production)
+assign_demo_challenge.py
+reset_demo_data.py
+setup_demo.sh
