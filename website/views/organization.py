@@ -1378,43 +1378,60 @@ def sizzle_daily_log(request):
                     {"success": "false", "message": "Blockers field is required."},
                     status=400,
                 )
-            # Handle goal_accomplished as radio button (yes/no instead of checkbox)
+            # Handle goal_accomplished as radio button (yes/no) - require explicit selection
             goal_accomplished_value = request.POST.get("goal_accomplished")
+            if goal_accomplished_value not in ["yes", "no"]:
+                return JsonResponse(
+                    {
+                        "success": "false",
+                        "message": "Goal accomplished field is required. Please select 'Yes' or 'No'.",
+                    },
+                    status=400,
+                )
             goal_accomplished = goal_accomplished_value == "yes"
             current_mood = request.POST.get("feeling")
             logger.debug(
                 f"Status: previous_work={previous_work}, next_plan={next_plan}, blockers={blockers}, goal_accomplished={goal_accomplished}, current_mood={current_mood}"
             )
 
-            # Check if user already submitted a check-in today
+            # Use get_or_create to handle concurrent submissions gracefully
             today = now().date()
-            existing_checkin = DailyStatusReport.objects.filter(
-                user=request.user,
-                date=today,
-            ).first()
-
-            if existing_checkin:
-                return JsonResponse(
-                    {
-                        "success": "false",
-                        "message": "You have already submitted a check-in for today. Please wait 24 hours from your last submission to submit again.",
-                    },
-                    status=400,
-                )
-
-            # Create new check-in
             try:
-                daily_status = DailyStatusReport.objects.create(
+                daily_status, created = DailyStatusReport.objects.get_or_create(
                     user=request.user,
                     date=today,
-                    previous_work=previous_work,
-                    next_plan=next_plan,
-                    blockers=blockers,
-                    goal_accomplished=goal_accomplished,
-                    current_mood=current_mood,
+                    defaults={
+                        "previous_work": previous_work,
+                        "next_plan": next_plan,
+                        "blockers": blockers,
+                        "goal_accomplished": goal_accomplished,
+                        "current_mood": current_mood,
+                    },
+                )
+                
+                if not created:
+                    # Record already exists (concurrent submission or duplicate)
+                    logger.info(
+                        f"Check-in already exists for user {request.user.username} on {today}. "
+                        "Returning 400 to client."
+                    )
+                    return JsonResponse(
+                        {
+                            "success": "false",
+                            "message": "You have already submitted a check-in for today. Please wait 24 hours from your last submission to submit again.",
+                        },
+                        status=400,
+                    )
+                
+                logger.info(
+                    f"Created new check-in for user {request.user.username} on {today}"
                 )
             except Exception as e:
-                logger.error(f"Error creating daily status report: {e}", exc_info=True)
+                # Unexpected database error (not a duplicate)
+                logger.error(
+                    f"Unexpected error creating daily status report for user {request.user.username}: {e}",
+                    exc_info=True,
+                )
                 return JsonResponse(
                     {
                         "success": "false",
