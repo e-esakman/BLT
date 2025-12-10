@@ -116,10 +116,8 @@ class DailyChallengeService:
             "goal_achiever",
             "detailed_planner",
         ]
-        active_challenges = DailyChallenge.objects.filter(
-            is_active=True, challenge_type__in=daily_completable_types
-        )
-        
+        active_challenges = DailyChallenge.objects.filter(is_active=True, challenge_type__in=daily_completable_types)
+
         if not active_challenges.exists():
             logger.warning(f"No active daily challenges available for user {user.username}")
             return None
@@ -288,9 +286,7 @@ class DailyChallengeService:
             try:
                 user_tz = pytz.timezone(user_tz_str)
             except pytz.exceptions.UnknownTimeZoneError:
-                logger.warning(
-                    f"Unknown timezone '{user_tz_str}' for user {user.username}, using UTC"
-                )
+                logger.warning(f"Unknown timezone '{user_tz_str}' for user {user.username}, using UTC")
                 user_tz = pytz.UTC
 
             # Convert check-in time to user's timezone

@@ -1408,7 +1408,7 @@ def sizzle_daily_log(request):
                         "current_mood": current_mood,
                     },
                 )
-                
+
                 if not created:
                     # Record already exists (concurrent submission or duplicate)
                     logger.info(
@@ -1422,10 +1422,8 @@ def sizzle_daily_log(request):
                         },
                         status=400,
                     )
-                
-                logger.info(
-                    f"Created new check-in for user {request.user.username} on {today}"
-                )
+
+                logger.info(f"Created new check-in for user {request.user.username} on {today}")
             except Exception as e:
                 # Unexpected database error (not a duplicate)
                 logger.error(
