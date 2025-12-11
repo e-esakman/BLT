@@ -1365,9 +1365,17 @@ def sizzle_daily_log(request):
             next_plan = request.POST.get("next_plan")
             blockers_type = request.POST.get("blockers")
             blockers_other = request.POST.get("blockers_other", "")
-            # Combine blockers: if "other" selected, use blockers_other, otherwise use the type
-            if blockers_type == "other" and blockers_other:
-                blockers = blockers_other
+            # Combine blockers: if "other" selected, require blockers_other to be non-empty
+            if blockers_type == "other":
+                if not blockers_other or not blockers_other.strip():
+                    return JsonResponse(
+                        {
+                            "success": "false",
+                            "message": "Please provide a description when selecting 'Other' for blockers.",
+                        },
+                        status=400,
+                    )
+                blockers = blockers_other.strip()
             elif blockers_type == "no_blockers":
                 blockers = "no blockers"
             elif blockers_type:
@@ -1412,8 +1420,7 @@ def sizzle_daily_log(request):
                 if not created:
                     # Record already exists (concurrent submission or duplicate)
                     logger.info(
-                        f"Check-in already exists for user {request.user.username} on {today}. "
-                        "Returning 400 to client."
+                        f"Check-in already exists for user {request.user.username} on {today}. Returning 400 to client."
                     )
                     return JsonResponse(
                         {
@@ -1460,31 +1467,32 @@ def sizzle_daily_log(request):
                 )
 
                 if completed_challenges:
-                    # Get details of completed challenges
-                    from datetime import date
-
+                    # Get details of completed challenges using timezone-aware today
                     from website.models import UserDailyChallenge
+
+                    # Get challenge titles to filter at DB level
+                    challenge_titles = list(completed_challenges)
 
                     user_challenges = (
                         UserDailyChallenge.objects.filter(
                             user=request.user,
-                            challenge_date=date.today(),
+                            challenge_date=today,
                             status="completed",
+                            challenge__title__in=challenge_titles,
                         )
                         .select_related("challenge")
                         .order_by("-completed_at")
                     )
 
                     for uc in user_challenges:
-                        if uc.challenge.title in completed_challenges:
-                            completed_challenges_data.append(
-                                {
-                                    "title": uc.challenge.title,
-                                    "points": uc.points_awarded,
-                                    "description": uc.challenge.description,
-                                }
-                            )
-                            total_points_awarded += uc.points_awarded
+                        completed_challenges_data.append(
+                            {
+                                "title": uc.challenge.title,
+                                "points": uc.points_awarded,
+                                "description": uc.challenge.description,
+                            }
+                        )
+                        total_points_awarded += uc.points_awarded
 
             except Exception as e:
                 logger.error(f"Error checking challenges: {e}")
