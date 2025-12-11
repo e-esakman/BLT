@@ -2,7 +2,7 @@
 
 import logging
 import random
-from datetime import timedelta, time
+from datetime import time, timedelta
 
 import pytz
 from django.db import transaction
