@@ -1438,14 +1438,13 @@ def sizzle_daily_log(request):
                     status=500,
                 )
 
-            # Set next_challenge_at to 24 hours from now for all user's challenges
-            from datetime import timedelta
-
+            # Set next_challenge_at to 24 hours from now for today's challenges only
             from website.models import UserDailyChallenge
 
             next_challenge_time = now() + timedelta(hours=24)
             UserDailyChallenge.objects.filter(
                 user=request.user,
+                challenge_date=today,
                 status="assigned",
             ).update(next_challenge_at=next_challenge_time)
 

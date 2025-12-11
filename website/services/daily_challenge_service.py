@@ -1,12 +1,14 @@
 # Service file: website/services/daily_challenge_service.py
 
 import logging
-from datetime import time
+import random
+from datetime import timedelta, time
 
 import pytz
+from django.db import transaction
 from django.utils import timezone
 
-from website.models import UserDailyChallenge, UserProfile
+from website.models import DailyChallenge, DailyStatusReport, UserDailyChallenge, UserProfile
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +46,6 @@ class DailyChallengeService:
         Args:
             user: User instance (must be authenticated)
         """
-        from datetime import timedelta
-
-        from website.models import DailyStatusReport
-
         if not user or not user.is_authenticated:
             return
 
@@ -98,12 +96,6 @@ class DailyChallengeService:
         Returns:
             UserDailyChallenge instance or None if no active challenges exist
         """
-        import random
-
-        from django.db import transaction
-
-        from website.models import DailyChallenge, UserDailyChallenge
-
         # Get all active challenge types, excluding streak_milestone (not a true daily challenge)
         # Streak milestones should be handled separately as they only complete on specific days
         # Only include challenges that can be completed on any day
@@ -117,10 +109,6 @@ class DailyChallengeService:
             "detailed_planner",
         ]
         active_challenges = DailyChallenge.objects.filter(is_active=True, challenge_type__in=daily_completable_types)
-
-        if not active_challenges.exists():
-            logger.warning(f"No active daily challenges available for user {user.username}")
-            return None
 
         # Randomly select a challenge type from daily-completable challenges
         challenge_list = list(active_challenges)
