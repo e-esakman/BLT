@@ -5,11 +5,10 @@
 {% block metaTags %}
     <title>
         {% block title %}
-            {% env 'PROJECT_NAME' %} Issue - {{ object.description|escapejs }}
+            {% env 'PROJECT_NAME' %} Issue - {{ object.description|escape }}
         {% endblock title %}
     </title>
-    <meta name="description"
-          content="{{ object.markdown_description|escapejs }}">
+    <meta name="description" content="{{ object.markdown_description|escape }}">
     {% if object.user.username %}
         <meta name="author" content="{{ object.user.username }}">
     {% else %}
@@ -22,7 +21,7 @@
               content="{% block og_image %}{{ screenshot.image.url }}{% endblock og_image %}" />
     {% endfor %}
     <meta property="og:description"
-          content="{% block og_description %}{{ object.markdown_description|escapejs }}{% endblock og_description %}" />
+          content="{% block og_description %}{{ object.markdown_description|escape }}{% endblock og_description %}" />
     <meta name="keywords"
           content="{% block keywords %}{% env 'PROJECT_NAME' %}, bug, tracking, organization, easy{% endblock keywords %}">
     <link rel="canonical" href="https://{% env 'FQDN' %}/issue/{{ object.id }}">
@@ -51,15 +50,19 @@
                                 <span class="font-medium text-sm">Issues</span>
                             </a>
                             <i class="fas fa-chevron-right text-gray-400 dark:text-gray-600 text-xs shrink-0"></i>
-                            <a href="{% url 'domain' object.domain.name %}"
-                               class="flex items-center hover:text-[#e74c3c] transition-colors duration-200 min-w-0">
-                                <img src="{{ object.domain.get_logo }}"
-                                     alt="Organization Logo"
-                                     class="w-4 h-4 rounded-md shadow-sm flex-shrink-0"
-                                     width="20"
-                                     height="20">
-                                <span class="ml-1.5 font-medium text-sm truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]">{{ object.domain.name }}</span>
-                            </a>
+                            {% if object.domain and object.domain.slug %}
+                                <a href="{% url 'domain' slug=object.domain.slug %}"
+                                   class="flex items-center hover:text-[#e74c3c] transition-colors duration-200 min-w-0">
+                                    <img src="{{ object.domain.get_logo }}"
+                                         alt="Organization Logo"
+                                         class="w-4 h-4 rounded-md shadow-sm flex-shrink-0"
+                                         width="16"
+                                         height="16">
+                                    <span class="ml-1.5 font-medium text-sm truncate">{{ object.domain.name }}</span>
+                                </a>
+                            {% else %}
+                                <span class="flex items-center text-gray-400 italic">No domain</span>
+                            {% endif %}
                             <span class="text-gray-400 dark:text-gray-600 shrink-0">/</span>
                             <span class="font-mono text-gray-600 dark:text-gray-400 text-xs shrink-0">
                                 {% if object.id < 100 %}#{% endif %}
@@ -90,27 +93,29 @@
                     <div class="flex flex-col gap-5 px-2">
                         <div class="flex flex-col gap-2">
                             <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight tracking-tight w-full break-words issue-description"
-                                title="{{ object.description|escapejs }}">{{ object.description|escapejs }}</h2>
+                                title="{{ object.description|escape }}">{{ object.description|escape }}</h2>
                             {% if object.markdown_description %}
                                 <p class="text-base sm:text-lg text-gray-700 dark:text-gray-300 font-medium break-words"
                                    id="bug_report"
-                                   data-markdown="{{ object.markdown_description|escapejs }}">
+                                   data-markdown="{{ object.markdown_description|escape }}">
                                     <!-- This content will be replaced by rendered markdown -->
                                 </p>
                             {% endif %}
                         </div>
                     </div>
-                    <a href="{{ object.url }}"
-                       title="{{ object.url }}"
+                    <a href="{{ object.url|escape }}"
+                       title="{{ object.url|escape }}"
                        target="_blank"
+                       rel="noopener noreferrer"
                        class="flex items-center gap-3 border px-3 sm:px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-100 w-full overflow-hidden">
                         <img src="{{ object.domain.get_logo }}"
                              alt="Organization Logo"
                              class="w-5 h-5 rounded-md shadow-sm flex-shrink-0"
                              width="20"
                              height="20">
-                        <p class="text-[#e74c3c] font-medium min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap transition-colors duration-200"
-                           rel="noopener noreferrer">{{ object.url }}</p>
+                        <p class="text-[#e74c3c] font-medium min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap transition-colors duration-200">
+                            {{ object.url }}
+                        </p>
                     </a>
                     <div class="flex items-center">
                         <img class="size-8 rounded-full object-cover"
@@ -155,13 +160,12 @@
                                     </button>
                                 </form>
                             {% endif %}
-                            <button class="relative border-[1px] inline-block shadow-sm rounded-xl transform-[0] font-medium text-[#3e3446] bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 px-4 py-3 hover:bg-gray-100 transition duration-200"
-                                    id="edit-issue">
+                            <!-- <button class="relative border-[1px] inline-block shadow-sm rounded-xl transform-[0] font-medium text-[#3e3446] bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 px-4 py-3 hover:bg-gray-100 transition duration-200" id="edit-issue">
                                 <div class="flex flex-row gap-2 items-center">
                                     <span class="max-sm:text-[12px]">Edit</span>
                                     <i class="fa-regular fa-pen-to-square"></i>
                                 </div>
-                            </button>
+                            </button> -->
                         {% endif %}
                         {% if request.user.is_superuser or request.user == object.user %}
                             <button onclick="deleteIssue({{ object.id }})"
@@ -190,7 +194,9 @@
                 </div>
             </div>
         </div>
-        <div>{% include "comments2.html" %}</div>
+        <div class="w-full border border-gray-300 dark:border-gray-600 shadow-md rounded-xl p-4">
+            {% include "comments2.html" %}
+        </div>
     </div>
     <!-- Scripts -->
     <script>
@@ -222,6 +228,25 @@
                 });
             });
         }
+
+        function resolveIssue() {
+            fetch('/issue/update/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+            issue_pk: '{{ object.id }}',
+            action: '{{ status }}' === 'open' ? 'close' : 'open'
+            })
+        }).then(res => {
+        if (res.ok) location.reload();
+            else alert('Failed to update issue');
+        });
+    }
+
+
     </script>
     <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
     <script>
@@ -254,8 +279,12 @@
     const bugReportElement = document.getElementById('bug_report');
     
     if (bugReportElement && window.markdownit) {
-        const md = new window.markdownit();
-        const markdownContent = bugReportElement.getAttribute('data-markdown') || bugReportElement.textContent;
+        const md = new window.markdownit({
+            linkify: true,
+            breaks: true
+        });
+
+        const markdownContent = bugReportElement.dataset.markdown || "";
         
         // First render the markdown
         let renderedHtml = md.render(markdownContent);
@@ -268,8 +297,9 @@
         
         // Update the content
         bugReportElement.innerHTML = DOMPurify.sanitize(renderedHtml, {
-        ALLOWED_TAGS: ['a', 'p', 'strong', 'em', 'ul', 'li', 'code', 'pre', 'blockquote'],
-        ALLOWED_ATTR: ['href', 'class']
+        ALLOWED_TAGS: [    'a','p','strong','em','b','i','ul','ol','li','code','pre','blockquote','h1','h2','h3','h4','h5','h6','br','img'],
+        ALLOWED_ATTR: ['href', 'class','target','rel','alt','src']
+
 });
     }
     
