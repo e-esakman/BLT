@@ -28,11 +28,9 @@ from website.models import (
     Contribution,
     Contributor,
     ContributorStats,
-    Course,
     DailyStats,
     DailyStatusReport,
     Domain,
-    Enrollment,
     GitHubComment,
     GitHubIssue,
     GitHubReview,
@@ -50,8 +48,6 @@ from website.models import (
     JoinRequest,
     Kudos,
     Labs,
-    Lecture,
-    LectureStatus,
     ManagementCommandLog,
     Message,
     Monitor,
@@ -66,11 +62,9 @@ from website.models import (
     PRAnalysisReport,
     Project,
     Queue,
-    Rating,
     ReminderSettings,
     Repo,
     Room,
-    Section,
     SlackBotActivity,
     SlackIntegration,
     StakingEntry,
@@ -964,12 +958,6 @@ admin.site.register(PRAnalysisReport)
 admin.site.register(Trademark)
 admin.site.register(TrademarkOwner)
 admin.site.register(OsshCommunity)
-admin.site.register(Lecture)
-admin.site.register(LectureStatus)
-admin.site.register(Course)
-admin.site.register(Section)
-admin.site.register(Enrollment)
-admin.site.register(Rating)
 admin.site.register(GitHubIssue, GitHubIssueAdmin)
 admin.site.register(GitHubReview, GitHubReviewAdmin)
 admin.site.register(GitHubComment, GitHubCommentAdmin)
